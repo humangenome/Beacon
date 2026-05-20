@@ -5,17 +5,20 @@ This repository contains:
 1. Documentation, README, and miscellaneous text files. These materials are
    licensed under the MIT License (see below).
 
-2. Compiled binaries of the Beacon Launcher attached to GitHub Releases. These
-   binaries are PROPRIETARY and CLOSED SOURCE. They are made available for
-   personal use only. Redistribution, modification, decompilation, reverse-
-   engineering, or commercial repackaging of the Beacon Launcher binary is
-   not permitted. The launcher's installer ships with an end-user license
-   agreement that contains the full terms.
+2. Compiled binaries of the Beacon Launcher and Beacon game-side runtime
+   components attached to GitHub Releases. These binaries are PROPRIETARY
+   and CLOSED SOURCE. They are made available for personal use only.
+   Redistribution, modification, decompilation, reverse-engineering, or
+   commercial repackaging of those proprietary binaries is not permitted.
+   The launcher's installer ships with an end-user license agreement that
+   contains the full terms.
 
 3. The BeaconServer host-side supervisor is a separate project, distributed
    from https://github.com/HumanGenome/BeaconServer under the MIT License.
-   When BeaconServer binaries are attached to releases on this repository,
-   they are governed by BeaconServer's MIT License, not by this file.
+   When BeaconServer-only binaries are attached to releases on this
+   repository, they are governed by BeaconServer's MIT License, not by this
+   file. Mixed bundles include both MIT BeaconServer files and proprietary
+   Beacon runtime files; each file keeps its own license.
 
 ---
 

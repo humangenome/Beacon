@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/icon.png" alt="Beacon" width="120">
+  <img src="docs/logo.png" alt="Beacon" width="360">
 </p>
 
 # Beacon
@@ -14,6 +14,8 @@ Real dedicated multiplayer for **Subnautica 2**. Your own IP-and-port server, fr
 _Beacon is a community project and is not affiliated with or endorsed by the developers of Subnautica 2._
 
 > **Official Hosting:** [SurvivalServers.com](https://www.survivalservers.com/games/subnautica_2/?utm_source=github&utm_medium=readme&utm_campaign=beacon) offers Subnautica 2 servers with Beacon pre-installed.
+
+![Beacon launcher](docs/img/launcher.png)
 
 ---
 
@@ -84,7 +86,9 @@ Lua and C++ mods load via UE4SS on both server and client.
 
 If you're using managed hosting, skip this step.
 
-Download `Beacon-Server-Windows-x64-<version>.zip` from the [latest release](https://github.com/HumanGenome/Beacon/releases/latest), extract, edit `appsettings.json`, forward UDP `<port>` + `<port>+2` and TCP `<port>+3` + `<port>+4`, and run `BeaconServer.exe`. Full self-host instructions in the [BeaconServer README](https://github.com/HumanGenome/BeaconServer#installation).
+Download `Beacon-Bundle-Windows-x64-v<version>.zip` from the [latest release](https://github.com/HumanGenome/Beacon/releases/latest), extract, edit `BeaconServer\appsettings.json`, forward UDP `<port>` + `<port>+2` and TCP `<port>+3` + `<port>+4`, and run `BeaconServer\BeaconServer.exe`. Full self-host instructions are in the [BeaconServer README](https://github.com/HumanGenome/BeaconServer#installation).
+
+The server-only zip contains the MIT BeaconServer binaries only. A playable Subnautica 2 host also needs the Beacon game-side runtime and UE4SS layout included in the bundle.
 
 ### Step 3: Connect
 
@@ -116,7 +120,10 @@ The split is deliberate: the server (where any host runs Beacon) is fully open a
 All releases of both components are published here, on this repo's [Releases page](https://github.com/HumanGenome/Beacon/releases). Each release attaches:
 
 - `BeaconSetup-<version>.exe` — Beacon Launcher installer
-- `Beacon-Server-Windows-x64-<version>.zip` — BeaconServer binaries
+- `Beacon-Launcher-Windows-x64-v<version>.zip` — portable launcher bundle
+- `Beacon-Bundle-Windows-x64-v<version>.zip` — complete self-host bundle
+- `Beacon-Server-Windows-x64-v<version>.zip` — BeaconServer binaries only
+- `checksums.txt` — release checksums
 
 BeaconServer also publishes to its own [Releases page](https://github.com/HumanGenome/BeaconServer/releases) for self-hosters who only want the server.
 

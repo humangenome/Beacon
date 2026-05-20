@@ -2,150 +2,88 @@
 
 [![Platform](https://img.shields.io/badge/Platform-Windows_10%2F11-blue.svg)](#install)
 [![Game](https://img.shields.io/badge/Game-Subnautica_2-darkgreen.svg)](https://store.steampowered.com/app/1962700/)
-[![Server](https://img.shields.io/badge/Server-Open_Source-brightgreen.svg)](https://github.com/HumanGenome/BeaconServer)
-[![Launcher](https://img.shields.io/badge/Launcher-Closed_Source-lightgrey.svg)](#license)
+[![Server Source](https://img.shields.io/badge/Server_Source-BeaconServer-brightgreen.svg)](https://github.com/HumanGenome/BeaconServer)
 
-Real dedicated multiplayer for **Subnautica 2**. Your own IP-and-port server, friends join by address, your save lives on the server, run mods if you want. No friend-code lobby, no peer-to-peer, no four-player ceiling.
+Beacon gives **Subnautica 2** IP/port multiplayer: players join through the Beacon desktop app, hosts run a Beacon server package next to Subnautica 2, and worlds stay on the server with snapshots, rollback, admin tools, server query, and mod support. No friend-code lobby, no peer-to-peer handoff, no four-player ceiling.
 
-> **Client requirement:** every player must install the closed-source **Beacon Launcher** from this repo's Releases page. Beacon servers are not joinable from unmodified stock Subnautica 2.
+Every player must install Beacon to join a Beacon server. Stock Subnautica 2 cannot connect to Beacon servers directly.
 
-_Beacon is a community project and is not affiliated with or endorsed by the developers of Subnautica 2._
-
-> **Official Hosting:** [SurvivalServers.com](https://www.survivalservers.com/games/subnautica_2/?utm_source=github&utm_medium=readme&utm_campaign=beacon) offers Subnautica 2 servers with Beacon pre-installed.
-
-![Beacon launcher showing a Subnautica 2 server entry](docs/img/launcher.png)
-
----
-
-## Table of Contents
-
-- [What Beacon is](#what-beacon-is)
-- [Features](#features)
-- [Install](#install)
-- [Documentation](#documentation)
-- [Source code](#source-code)
-- [Releases](#releases)
-- [License](#license)
-- [Credits](#credits)
-
----
-
-## What Beacon is
-
-Beacon is two pieces that ship together:
-
-- **Beacon Launcher** — desktop app every player installs. Adds servers by IP and port, launches Subnautica 2 into the right session, manages your character roster, and gives admins a snapshot / restore / RCON console panel. Distributed as a **closed-source binary**.
-- **BeaconServer** — Windows supervisor that the host machine runs alongside Subnautica 2. Handles process supervision, save snapshots, Source A2S query, Source RCON, and an HMAC-signed HTTP admin API. **Open source under MIT** at [HumanGenome/BeaconServer](https://github.com/HumanGenome/BeaconServer).
-
-You install the launcher to join. A managed host (or you) runs BeaconServer next to a Subnautica 2 install to host. The client launcher requirement is mandatory for both self-hosted and managed servers.
-
----
+<p align="center">
+  <img src="https://raw.githubusercontent.com/HumanGenome/Beacon/main/docs/img/launcher.png" alt="Beacon launcher showing a Subnautica 2 server" width="860">
+</p>
 
 ## Features
 
-### Real Dedicated Server
-Friends connect by IP and port. The server stays up when you log off, your world persists on the server's disk, no host migration when the "host" leaves.
+### 🧭 Join by IP and port
+Add a server address once, pick your character, and connect straight into the hosted world.
 
-### Beyond the 4-Player Cap
-Stock Subnautica 2 caps coop at 4 players. Beacon replaces the transport layer with Unreal's standard listen-server networking, so you can run 6, 8, or more on the same world.
+### 👥 Larger groups
+Beacon removes the stock four-player lobby limit. Larger groups are supported by the Beacon transport path, though Subnautica 2's pacing is still balanced around smaller crews.
 
-### Multi-Character Profiles
-Each player keeps multiple characters on the same server. The launcher remembers which character you used where; the server keeps each character's save shard isolated.
+### 💾 Server-side worlds
+The world lives on the host machine. The server can keep running after a player leaves, and save snapshots give admins a recovery point before major changes.
 
-### Save Snapshots & Rollback
-Beacon snapshots your world automatically and on demand. Bad merge, raid wipe, deleted base? Roll back from the launcher's admin panel.
+### 🔁 Snapshots and rollback
+Admins can take snapshots, list saved worlds, and restore a previous world from Beacon's world tools or RCON.
 
-### Admin Console (RCON)
-Standard Source RCON listener on `gameplay port + 3`. Use any standard RCON client.
+### 🧑‍🚀 Multiple characters
+Players can keep separate characters per server. Beacon remembers the character you used for each saved server.
 
-### Server Browser Support
-Beacon responds to Source A2S queries — server browsers, monitoring tools, and Discord status bots can see your server's name, map, player count, and uptime.
+### 🛠 Admin console
+BeaconServer exposes Source RCON on the server's RCON port for commands like `help`, `status`, `players`, `ping`, `save snapshot`, and `save list`.
 
-### Mods
-Lua and C++ mods load via UE4SS on both server and client.
+### 📡 Server query
+BeaconServer answers Source A2S query so server lists, monitoring tools, and bots can read status and player counts.
 
----
+### 🧩 Mods
+Beacon uses UE4SS for Lua and C++ mod loading on the client and host runtime.
 
 ## Install
 
-### Prerequisites
+### Managed hosting
+The shortest path is [SurvivalServers.com Subnautica 2 hosting](https://www.survivalservers.com/services/game_servers/subnautica_2/?utm_source=github&utm_medium=readme_install&utm_campaign=beacon). Beacon is already installed, ports are handled, and the panel shows a one-click Beacon setup link for players.
 
-- **Windows 10 or 11** (64-bit)
-- **Subnautica 2** installed (Steam, Epic Games, or Microsoft Store)
-- A way to reach the server — managed hosting (e.g. SurvivalServers), or a Windows machine on your network with a port forwarded
-
-### Step 1: Install the Launcher (every player)
-
+### Players
 1. Download `BeaconSetup-<version>.exe` from the [latest release](https://github.com/HumanGenome/Beacon/releases/latest).
-2. Run the installer. Windows SmartScreen will flag it because the binary isn't code-signed — click **More info → Run anyway**.
-3. The installer drops Beacon into `%LOCALAPPDATA%\Beacon\` and adds a Start Menu shortcut.
+2. Run the installer. Windows SmartScreen may warn because the installer is not code-signed yet; choose **More info** then **Run anyway**.
+3. Open Beacon, add the server address, select or create a character, and click **Connect**.
 
-Players cannot join a Beacon server directly from Subnautica 2's stock multiplayer menu. They must launch through Beacon so the client uses the same IP/port transport and runtime as the server.
+Beacon also checks for launcher updates automatically on launch and while it is running.
 
-### Step 2: Set Up Your Server (self-host)
+### Self-hosted servers
+1. Download `Beacon-Server-Windows-x64-v<version>.zip` from the [latest release](https://github.com/HumanGenome/Beacon/releases/latest).
+2. Extract it on the Windows host.
+3. Edit `BeaconServer\appsettings.json`.
+4. Forward/open the gameplay UDP port, query UDP port, RCON TCP port, and admin HTTP TCP port.
+5. Run `BeaconServer\BeaconServer.exe`.
 
-If you're using managed hosting, skip this step.
-
-Download `Beacon-Bundle-Windows-x64-v<version>.zip` from the [latest release](https://github.com/HumanGenome/Beacon/releases/latest), extract, edit `BeaconServer\appsettings.json`, forward UDP `<port>` + `<port>+2` and TCP `<port>+3` + `<port>+4`, and run `BeaconServer\BeaconServer.exe`. Full self-host instructions are in the [BeaconServer README](https://github.com/HumanGenome/BeaconServer#installation).
-
-The server-only zip contains the MIT BeaconServer binaries only. A playable Subnautica 2 host also needs the Beacon game-side runtime and UE4SS layout included in the bundle.
-
-### Step 3: Connect
-
-Open the launcher, click **Add server**, enter host address + gameplay port + optional admin password, click **Connect**. Subnautica 2 launches and drops you in.
-
----
-
-## Documentation
-
-- **[Admin & RCON guide](https://github.com/HumanGenome/BeaconServer/blob/main/docs/ADMIN.md)** — launcher admin panel, RCON command reference, HTTP admin API
-- **[Modding guide](https://github.com/HumanGenome/BeaconServer/blob/main/docs/MODS.md)** — Lua and C++ mod entry points
-- **[BeaconServer source](https://github.com/HumanGenome/BeaconServer)** — server code, MIT licensed
-
----
-
-## Source code
-
-| Component | Source | License |
-|---|---|---|
-| **BeaconServer** (host supervisor + API) | [HumanGenome/BeaconServer](https://github.com/HumanGenome/BeaconServer) | MIT |
-| **Beacon Launcher** (desktop app + game-side plugin) | Closed source | Proprietary binary, free to use, see [LICENSE](LICENSE) |
-
-The split is deliberate: the server (where any host runs Beacon) is fully open and forkable. The launcher (where the runtime UE5 instrumentation lives) is closed for now while the project stabilizes; that may change in future.
-
----
+Full server setup, settings, source query examples, RCON commands, and build instructions live in [HumanGenome/BeaconServer](https://github.com/HumanGenome/BeaconServer).
 
 ## Releases
 
-All releases of both components are published here, on this repo's [Releases page](https://github.com/HumanGenome/Beacon/releases). Each release attaches:
+The public release page is intentionally simple:
 
-- `BeaconSetup-<version>.exe` — Beacon Launcher installer
-- `Beacon-Launcher-Windows-x64-v<version>.zip` — portable launcher bundle
-- `Beacon-Bundle-Windows-x64-v<version>.zip` — complete self-host bundle
-- `Beacon-Server-Windows-x64-v<version>.zip` — BeaconServer binaries only
-- `checksums.txt` — release checksums
+- `BeaconSetup-<version>.exe` — installer for players
+- `Beacon-Server-Windows-x64-v<version>.zip` — server package for hosts
+- `checksums.txt` — hashes for the release assets
 
-BeaconServer also publishes to its own [Releases page](https://github.com/HumanGenome/BeaconServer/releases) for self-hosters who only want the server.
+Source archives are generated by GitHub automatically for tags.
 
----
+## Source
 
-## Contributing
+BeaconServer source is open at [HumanGenome/BeaconServer](https://github.com/HumanGenome/BeaconServer).
 
-Issues and pull requests for the **server** are welcome at [HumanGenome/BeaconServer](https://github.com/HumanGenome/BeaconServer). For the **launcher**, please file bug reports and feature requests on this repo's [Issues](https://github.com/HumanGenome/Beacon/issues) — but PRs against the launcher aren't accepted since the source isn't public.
+This repo is the public download and documentation hub for the Beacon client app and release assets.
 
----
+## Community Note
+
+Beacon is a community project and is not affiliated with or endorsed by the developers of Subnautica 2.
 
 ## License
 
-The contents of this repository (README, docs) are licensed under MIT (see [LICENSE](LICENSE)).
-
-The Beacon Launcher binary attached to releases is **closed source**. It is free to download and use, but redistribution, modification, decompilation, and reverse-engineering of the launcher binary are not permitted. The launcher's installer EULA contains the full terms.
-
-BeaconServer (the host-side supervisor) is separately licensed under MIT at [HumanGenome/BeaconServer](https://github.com/HumanGenome/BeaconServer).
-
----
+See [LICENSE](LICENSE).
 
 ## Credits
 
 - [UE4SS](https://github.com/UE4SS-RE/RE-UE4SS) — Unreal Engine scripting and modding framework
-- [Avalonia](https://avaloniaui.net/) — cross-platform .NET UI used by the launcher
+- [Avalonia](https://avaloniaui.net/) — .NET UI framework used by Beacon

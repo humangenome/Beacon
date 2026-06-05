@@ -27,6 +27,13 @@ Add a server address once, pick your character, and connect straight into the ho
 ### 👥 Larger groups
 Beacon removes the stock four-player lobby limit. Larger groups are supported by the Beacon transport path, though Subnautica 2's pacing is still balanced around smaller crews.
 
+### 💬 In-game chat
+Press Enter to open chat without leaving the game. Beacon overlays a timestamped chat panel in Subnautica 2 with player messages, server notices, and admin announcements. Admins post announcements and a message of the day from the server console or RCON, and players can run commands like `/players` and `/help` straight from the chat box.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/HumanGenome/Beacon/main/docs/img/chat.jpg" alt="Beacon in-game chat overlay in Subnautica 2" width="860">
+</p>
+
 ### 💾 Server-side worlds
 The world lives on the host machine. The server can keep running after a player leaves, and save snapshots give admins a recovery point before major changes.
 

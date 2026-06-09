@@ -104,3 +104,4 @@ See [LICENSE](LICENSE).
 
 - [UE4SS](https://github.com/UE4SS-RE/RE-UE4SS) — Unreal Engine scripting and modding framework
 - [Avalonia](https://avaloniaui.net/) — .NET UI framework used by Beacon
+- [joric/subnautica](https://github.com/joric/subnautica) (Unlicense) — the interactive Subnautica 2 map that powers Beacon's live web map

@@ -34,6 +34,13 @@ Press Enter to open chat without leaving the game. Beacon overlays a timestamped
   <img src="https://raw.githubusercontent.com/HumanGenome/Beacon/main/docs/img/chat.jpg" alt="Beacon in-game chat overlay in Subnautica 2" width="860">
 </p>
 
+### 🗺 Live map
+See who's online on a real, interactive map of the world. The server publishes live player positions and the launcher opens a browser map that plots each player and updates in real time, on the full Subnautica 2 world with its Points of Interest. Open it per-server from the launcher's Map button, or straight from the host's `/map/` page.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/HumanGenome/Beacon/main/docs/img/live-map.gif" alt="Beacon live web map tracking a player in Subnautica 2" width="860">
+</p>
+
 ### 💾 Server-side worlds
 The world lives on the host machine. The server can keep running after a player leaves, and save snapshots give admins a recovery point before major changes.
 

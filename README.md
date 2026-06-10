@@ -21,11 +21,12 @@ Every player must install Beacon to join a Beacon server. Stock Subnautica 2 can
 
 ## Features
 
-### 🧭 Join by IP and port
-Add a server address once, pick your character, and connect straight into the hosted world.
+### 🗺 Live map
+See who's online on a real, interactive map of the world. The server publishes live player positions and the launcher opens a browser map that plots each player and updates in real time, on the full Subnautica 2 world with its Points of Interest. Open it per-server from the launcher's Map button, or straight from the host's `/map/` page.
 
-### 👥 Larger groups
-Beacon lifts the stock four-player lobby cap, so bigger crews can share one server over Beacon's transport. Note that Subnautica 2's pacing is still tuned for small groups.
+<p align="center">
+  <img src="https://raw.githubusercontent.com/HumanGenome/Beacon/main/docs/img/live-map.gif" alt="Beacon live web map tracking a player in Subnautica 2" width="860">
+</p>
 
 ### 💬 In-game chat
 Press Enter to open chat without leaving the game. Beacon overlays a timestamped chat panel in Subnautica 2 with player messages, server notices, and admin announcements. Admins post announcements and a message of the day from the server console or RCON, and players can run commands like `/players` and `/help` straight from the chat box.
@@ -34,12 +35,14 @@ Press Enter to open chat without leaving the game. Beacon overlays a timestamped
   <img src="https://raw.githubusercontent.com/HumanGenome/Beacon/main/docs/img/chat.jpg" alt="Beacon in-game chat overlay in Subnautica 2" width="860">
 </p>
 
-### 🗺 Live map
-See who's online on a real, interactive map of the world. The server publishes live player positions and the launcher opens a browser map that plots each player and updates in real time, on the full Subnautica 2 world with its Points of Interest. Open it per-server from the launcher's Map button, or straight from the host's `/map/` page.
+### 👥 Bigger crews
+Stock Subnautica 2 caps co-op at four players. Beacon runs your whole crew on one server, past that limit.
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/HumanGenome/Beacon/main/docs/img/live-map.gif" alt="Beacon live web map tracking a player in Subnautica 2" width="860">
-</p>
+### 🧭 Join by IP and port
+Add a server address once, pick your character, and connect straight into the hosted world.
+
+### 🧑‍🚀 Multiple characters
+Players can keep separate characters per server. Beacon remembers the character you used for each saved server.
 
 ### 🔁 Snapshots and rollback
 The server snapshots the world on every auto-save, and admins can trigger and list snapshots over RCON:
@@ -53,9 +56,6 @@ snap-20260610T141503Z-7c9e2ab04d113e  52428800B  age=42s  sha=ab12cd34ef56ab12
 
 Restore by ID from the launcher's world tools or the admin HTTP API (`POST /api/v1/snapshots/<id>/restore`). The server takes a pre-restore snapshot, swaps the world in, and relaunches Subnautica 2.
 
-### 🧑‍🚀 Multiple characters
-Players can keep separate characters per server. Beacon remembers the character you used for each saved server.
-
 ### 🛠 Admin console
 BeaconServer exposes Source RCON (default TCP 27018) with built-ins like `status`, `players`, `save snapshot`, and `motd`, plus slash commands registered by server mods:
 
@@ -67,13 +67,14 @@ chat ok (admin): Server restarts in 10 minutes
 `announce` posts an admin notice to every connected player's in-game chat overlay.
 
 ### 📡 Server query
-BeaconServer answers Source A2S query (default UDP 27017) so server lists, monitoring tools, and bots can read status and player counts:
+BeaconServer answers Source A2S query (default UDP 27017), so server browsers, monitoring tools, and bots can read live status and player counts:
 
-```python
->>> import a2s
->>> a2s.info(("play.example.com", 27017))
-SourceInfo(server_name='Reef Runners', map_name='Awake', game='Subnautica 2',
-           player_count=3, max_players=4, version='beacon-0.3.102/sn2-115506', ...)
+```
+Server name : Reef Runners
+Map         : Awake
+Game        : Subnautica 2
+Players     : 3 / 4
+Version     : beacon-0.3.102/sn2-115506
 ```
 
 ### 🧩 Mods

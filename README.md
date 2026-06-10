@@ -106,14 +106,14 @@ The easiest option is a [SurvivalServers.com Subnautica 2 server](https://www.su
 Beacon checks for launcher updates automatically on launch and while it is running.
 
 ### Self-hosted servers
-1. Download `Beacon-Server-Windows-x64-v<version>.zip` from the [latest BeaconServer release](https://github.com/HumanGenome/BeaconServer/releases/latest). The zip contains `BeaconServer.exe` and `appsettings.json` at its root.
-2. Extract it into a `BeaconServer` folder under a stable root, for example `C:\Beacon\BeaconServer\`.
-3. Install the Subnautica 2 game files on the host under the folder set as `SnInstallRoot` in `appsettings.json` (default `C:\Beacon\game`) — copy your `steamapps\common\Subnautica2` folder there, or install with SteamCMD (app `1962700`). BeaconServer launches the game from that folder; it does not ship the game.
-4. Edit `appsettings.json` (server name, ports, `RconPassword`).
+1. Download `Beacon-Server-Windows-x64-v<version>.zip` from the [latest BeaconServer release](https://github.com/HumanGenome/BeaconServer/releases/latest). It is self-contained — it includes the server (`BeaconServer\`), Beacon's in-game runtime (`ue4ss\` plus the native `Beacon.dll`), and the injector (`tools\`).
+2. Extract it to a stable folder, for example `C:\Beacon\`.
+3. Install the Subnautica 2 game files under the folder set as `SnInstallRoot` in `BeaconServer\appsettings.json` (default `C:\Beacon\game`) — copy your `steamapps\common\Subnautica2` folder there, or install with SteamCMD (app `1962700`). BeaconServer launches the game from that folder; it does not ship the game.
+4. Edit `BeaconServer\appsettings.json` (server name, ports, `RconPassword`).
 5. Forward/open the gameplay port (UDP), query port (UDP), RCON port (TCP), and admin HTTP port (TCP).
-6. Run `BeaconServer.exe`.
+6. Run `BeaconServer\BeaconServer.exe`.
 
-The BeaconServer zip is the open-source host supervisor. A playable Beacon host additionally needs Beacon's in-game runtime — the `ue4ss\` folder with Beacon's server mods and the native `Beacon.dll` — placed next to the `BeaconServer\` folder; without it the supervisor logs an error and the game runs as a plain listen server with no password gate, chat, roster, or live map. Managed hosting ships with this runtime preinstalled.
+(Building the BeaconServer source yourself produces the supervisor only — the in-game runtime is built separately and bundled into the release zip above.)
 
 Full server setup, settings, source query examples, RCON commands, and build instructions live in [HumanGenome/BeaconServer](https://github.com/HumanGenome/BeaconServer).
 

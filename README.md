@@ -161,7 +161,7 @@ No. Beacon is Windows-only, for both the player app and the server (Windows 10/1
 
 ## Known Issues
 
-- **"The game was not started via the platform launcher and will be closed."** Recent Subnautica 2 builds run a storefront check on startup that a headless host can fail, which shows this dialog and then boot-loops the server. The workaround that has worked for most people is to keep the Steam client running on the host, in offline mode, signed in to an account that owns Subnautica 2. It does not work for everyone; tracked in [issue #8](https://github.com/HumanGenome/Beacon/issues/8).
+- **"The game was not started via the platform launcher and will be closed."** Subnautica 2 asks the Steam client to confirm the copy of the game it is running. On a headless host that answer often does not come back, and the game closes itself, which leaves the server relaunching in a loop. Three things have to be true on the server machine: the Steam client is running (offline mode is fine) and signed in to an account that owns Subnautica 2, it is the same Windows user and session that runs BeaconServer, and `steam_appid.txt` containing `1962700` sits next to `Subnautica2-Win64-Shipping.exe`. Beacon writes `steam_appid.txt` for you from v0.3.125 on, so the part left to you is the Steam client. Tracked in [issue #8](https://github.com/HumanGenome/Beacon/issues/8).
 - **Client and server must be on the same game build.** After a Subnautica 2 update, joins can hang at the main menu until the server's game files are updated too. Update both sides together.
 
 ## Community Note

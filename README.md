@@ -44,6 +44,9 @@ Add a server address once, pick your character, and connect straight into the ho
 ### 🧑‍🚀 Multiple characters
 Players can keep separate characters per server. Beacon remembers the character you used for each saved server.
 
+### 🔒 Server password
+Subnautica 2 has no native password handling, so Beacon adds its own. Set `BeaconAuthPassword` in the server's `appsettings.json` and the server gates every remote join on it and kicks anyone who doesn't match. The password flag is also reported in Source query, so server browsers show the server as locked.
+
 ### 🔁 Snapshots and rollback
 The server snapshots the world on every auto-save, and admins can trigger and list snapshots over RCON:
 
@@ -73,8 +76,8 @@ BeaconServer answers Source A2S query (default UDP 27017), so server browsers, m
 Server name : Reef Runners
 Map         : Awake
 Game        : Subnautica 2
-Players     : 3 / 4
-Version     : beacon-0.3.102/sn2-115506
+Players     : 3 / 8
+Version     : beacon-<version>/sn2-<game build>
 ```
 
 ### 🧩 Mods
@@ -86,7 +89,7 @@ Beacon uses UE4SS for Lua and C++ mod loading on the client and host runtime. Se
     "Id": "beacon-hud",
     "Name": "Beacon HUD chat overlay",
     "Version": "0.8.9",
-    "Url": "https://survivalservers.b-cdn.net/beacon/mods/beacon-hud-0.8.9.zip",
+    "Url": "https://mods.example.com/beacon-hud-0.8.9.zip",
     "Sha256": "<hex sha256 of the zip>",
     "InstallRoot": "Mods/BeaconHud"
   }]
@@ -138,6 +141,28 @@ Beacon is split into two repos:
 - **[BeaconServer](https://github.com/HumanGenome/BeaconServer)** — the dedicated server hosts run next to Subnautica 2. Open source.
 
 Players only need this repo's releases; hosts run the server from BeaconServer's.
+
+## FAQ
+
+### How do I join a server?
+Open Beacon, click Add Server, and enter a name, the server's IP or hostname, and its gameplay port. Add the server password if it has one. Beacon derives the query, RCON, and admin ports from the gameplay port, so you only enter the one port. Select the server, pick or create a character, and click Connect.
+
+### Can I run the server on the same machine I play on?
+No. The Beacon server runs its own copy of Subnautica 2 in the background and your game client runs a second copy, and Steam only allows one running instance of a game per account. Run the server on a separate host and connect to it from your gaming PC.
+
+### Do I need to own Subnautica 2 on the server machine?
+Yes. BeaconServer launches the real game; it does not ship it. Install the game files under `SnInstallRoot` on the host, from a copy of `steamapps\common\Subnautica2` or through SteamCMD with an account that owns the game.
+
+### Can I import an existing save?
+Yes, from the launcher's World backups dialog, but the save must be a `.zip`, not a loose `.sav`. The zip must hold the contents of a SaveGames folder — `savegame_0.sav` and its sibling files at the root of the zip, not inside a subfolder. Beacon rejects a zip with no `savegame_*.sav` at its root, takes a backup before importing, and restarts the server on the imported world.
+
+### Is Linux supported?
+No. Beacon is Windows-only, for both the player app and the server (Windows 10/11 or Windows Server, 64-bit). The server launches the Windows build of Subnautica 2 and uses Windows process management.
+
+## Known Issues
+
+- **"The game was not started via the platform launcher and will be closed."** Recent Subnautica 2 builds run a storefront check on startup that a headless host can fail, which shows this dialog and then boot-loops the server. The workaround that has worked for most people is to keep the Steam client running on the host, in offline mode, signed in to an account that owns Subnautica 2. It does not work for everyone; tracked in [issue #8](https://github.com/HumanGenome/Beacon/issues/8).
+- **Client and server must be on the same game build.** After a Subnautica 2 update, joins can hang at the main menu until the server's game files are updated too. Update both sides together.
 
 ## Community Note
 

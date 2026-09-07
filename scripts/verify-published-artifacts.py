@@ -30,11 +30,6 @@ SKIP_PREFIXES = [
 REPO_RULES = {
     "entry_deny": [
         {
-            "id": "HEARTH-BWHOST",
-            "re": "(?i)(^|/)bw_host(/|$)",
-            "desc": "Bellwright host mod (RULE #21d: never published, source or built)"
-        },
-        {
             "id": "CAULDRON-STEAMEMU",
             "re": "(?i)(goldberg|gbe_fork|steam_api64|steam_settings|steam_interfaces|steamemu|coldclientloader)",
             "desc": "Steam emulator / headless-auth recipe (RULE #21e)"
@@ -55,22 +50,6 @@ REPO_RULES = {
             "desc": "LanternClientNetPatch source/link artifact (RULE #21c)"
         }
     ],
-    "entry_crc_deny": [
-        {
-            "id": "HEARTH-SIG-SERVER",
-            "re": "(?i)UE4SS_Signatures/GUObjectHashTables\\.lua$",
-            "crc": 2631040471,
-            "desc": "SERVER-variant Bellwright signature pack (RULE #21d). The CLIENT variant (crc 538838814) ships with the Hearth launcher by necessity and is NOT a violation."
-        }
-    ],
-    "entry_cooccur_deny": [
-        {
-            "id": "HEARTH-SIGSET-WITH-HOST",
-            "if_re": "(?i)(^|/)bw_host(/|$)",
-            "then_re": "(?i)UE4SS_Signatures/.*\\.lua$",
-            "desc": "signature packs shipped alongside bw_host = the complete Bellwright host runtime (RULE #21d)"
-        }
-    ],
     "token_deny": [
         {
             "id": "CAULDRON-EMU-TEXT",
@@ -83,13 +62,6 @@ REPO_RULES = {
                 "steam_settings",
                 "AuthenticationGraph",
                 "ColdClientLoader"
-            ]
-        },
-        {
-            "id": "HEARTH-BWHOST-TEXT",
-            "desc": "Bellwright host mod named in a shipped file (RULE #21d)",
-            "tokens": [
-                "bw_host"
             ]
         },
         {

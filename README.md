@@ -96,8 +96,8 @@ Beacon uses UE4SS for Lua and C++ mod loading on the client and host runtime. Se
   "Required": [{
     "Id": "beacon-hud",
     "Name": "Beacon HUD chat overlay",
-    "Version": "0.8.9",
-    "Url": "https://mods.example.com/beacon-hud-0.8.9.zip",
+    "Version": "0.9.0",
+    "Url": "https://mods.example.com/beacon-hud-0.9.0.zip",
     "Sha256": "<hex sha256 of the zip>",
     "InstallRoot": "Mods/BeaconHud"
   }]
@@ -192,4 +192,4 @@ The documentation in this repo is MIT. The app and in-game runtime binaries atta
 - [UE4SS](https://github.com/UE4SS-RE/RE-UE4SS): Unreal Engine scripting and modding framework
 - [Avalonia](https://avaloniaui.net/): .NET UI framework used by Beacon
 - [joric/subnautica](https://github.com/joric/subnautica) (Unlicense): the interactive Subnautica 2 map that powers Beacon's live web map
-- [MultiplayerChat](https://www.nexusmods.com/subnautica2/mods/153) by TheMC ([TheMCNetwork](https://github.com/TheMCNetwork/MultiplayerChat)): the in-game chat overlay's typing input, movement lock while typing, and display on the game's own watermark text are adapted from this mod
+- [MultiplayerChat](https://www.nexusmods.com/subnautica2/mods/153) by TheMC ([TheMCNetwork](https://github.com/TheMCNetwork/MultiplayerChat)): first showed the approach Beacon's in-game chat uses (typing through UE4SS key binds, holding the player still while typing, and showing chat in the game's own HUD text). Beacon's chat code is its own.

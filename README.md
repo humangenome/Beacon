@@ -61,7 +61,11 @@ snapshot ok: snap-20260610T141503Z-7c9e2ab04d113e (52428800 bytes, sha=ab12cd34e
 snap-20260610T141503Z-7c9e2ab04d113e  52428800B  age=42s  sha=ab12cd34ef56ab12
 ```
 
-Restore by ID from the launcher's **World backups** dialog or the admin HTTP API (`POST /api/v1/snapshots/<id>/restore`). There is no restore command over RCON. The server stops the game process, takes a pre-restore snapshot, swaps the world in, and relaunches Subnautica 2.
+The app's **World** window lists the server's snapshots by time and size and downloads any of them. On a self-hosted server, where BeaconServer starts the game, it also restores a snapshot, imports a save from your PC and moves the newest snapshot over from another of your servers, each after a confirmation. The server stops the game, keeps a snapshot of the current world, swaps the world in and starts the game again. There is no restore command over RCON; scripts can use the admin HTTP API (`POST /api/v1/snapshots/<id>/restore`).
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/HumanGenome/Beacon/main/docs/img/world-backups.png" alt="Beacon World window with a server's snapshots, Restore and save import" width="560">
+</p>
 
 ### 🛠 Admin console
 BeaconServer exposes Source RCON (default TCP 27018) with built-ins `help`, `status`, `players`, `ping`, `save snapshot`, `save list`, `say`, `announce`, and `motd`, plus slash commands registered by server mods:
@@ -158,7 +162,10 @@ No. The Beacon server runs its own copy of Subnautica 2 in the background and yo
 Yes. BeaconServer launches the real game; it does not ship it. Install the game files under `SnInstallRoot` on the host, from a copy of `steamapps\common\Subnautica2` or through SteamCMD with an account that owns the game.
 
 ### Can I import an existing save?
-Yes, from the launcher's World backups dialog, but the save must be a `.zip`, not a loose `.sav`. The zip must hold the contents of a SaveGames folder: `savegame_0.sav` and its sibling files at the root of the zip, not inside a subfolder. Beacon rejects a zip with no `savegame_*.sav` at its root, takes a backup before importing, and restarts the server on the imported world.
+Yes, on a self-hosted server running BeaconServer 0.3.132 or newer. Open the server's **World** window, save its admin password, and use **Choose file & import**. The save must be a `.zip` of a Subnautica 2 SaveGames folder: a `savegame_N.sav` file and the files next to it at the top of the zip, not inside a subfolder. The server keeps a snapshot of the current world first, makes the imported world its `savegame_0.sav` and restarts on it. On a server whose game is started by a hosting panel, the World window offers snapshot downloads only; ask the host to load a save. Before Beacon 0.3.132 the World window showed only its password row.
+
+### Does Beacon change my own Subnautica 2 settings?
+Only while you play through Beacon. Connect sets the game's network settings for a Beacon join and a 1600x900 window, in your normal Subnautica 2 config folder. When the game closes, Beacon puts your own Engine.ini and display settings back, or on its next start if the app was closed or crashed by then. A display setting you change in game during the session is kept.
 
 ### Is Linux supported?
 No. Beacon is Windows-only, for both the player app and the server (Windows 10/11 or Windows Server, 64-bit). The server launches the Windows build of Subnautica 2 and uses Windows process management.
@@ -185,3 +192,4 @@ The documentation in this repo is MIT. The app and in-game runtime binaries atta
 - [UE4SS](https://github.com/UE4SS-RE/RE-UE4SS): Unreal Engine scripting and modding framework
 - [Avalonia](https://avaloniaui.net/): .NET UI framework used by Beacon
 - [joric/subnautica](https://github.com/joric/subnautica) (Unlicense): the interactive Subnautica 2 map that powers Beacon's live web map
+- [MultiplayerChat](https://www.nexusmods.com/subnautica2/mods/153) by TheMC ([TheMCNetwork](https://github.com/TheMCNetwork/MultiplayerChat)): the in-game chat overlay's typing input, movement lock while typing, and display on the game's own watermark text are adapted from this mod

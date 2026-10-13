@@ -33,7 +33,7 @@ See who's online on a real, interactive map of the world. Connected players repo
 </p>
 
 ### 💬 In-game chat
-Press Enter to open chat without leaving the game. Beacon overlays a timestamped chat panel in Subnautica 2 with player messages, server notices, and admin announcements. Admins post announcements and a message of the day from the server console, RCON, or the HTTP API, and players can run commands like `/players` and `/help` straight from the chat box.
+Press Enter to open chat without leaving the game. Beacon overlays a timestamped chat panel in Subnautica 2 with player messages, server notices, and admin announcements. Admins post announcements and a message of the day from the server console, RCON, or the HTTP API, and players can run commands like `/players` and `/help` straight from the chat box. Chat shows in game on servers that offer Beacon's chat overlay; a self-hosted BeaconServer does not include it.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/HumanGenome/Beacon/main/docs/img/chat.jpg" alt="Beacon in-game chat overlay in Subnautica 2" width="860">

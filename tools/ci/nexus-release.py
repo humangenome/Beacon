@@ -181,9 +181,9 @@ def public_download_status(game_id):
 def verify_public_downloads(response, version, current, tolerate_quarantine=False):
     """Check the page version and the installer download's controls and scan state.
 
-    Returns True when the installer is quarantined and the caller tolerates it. Only the
-    scheduled drift check tolerates a quarantine (reported as a warning). Release and manual
-    runs fail on it, and a pending or unknown scan fails every run."""
+    Returns True when the installer is quarantined and the caller tolerates it. Only read-only
+    runs tolerate a quarantine (reported as a warning). Release runs and manual uploads fail
+    on it, and a pending or unknown scan fails every run."""
     if response.get("errors"):
         raise ValueError("Nexus page/scan query failed; download status is unverified")
     data = response.get("data") or {}
@@ -292,8 +292,8 @@ def main():
     if current:
         if not current.get("is_primary"):
             raise ValueError("The installer must be the primary Nexus download")
-        # Set only by the scheduled drift check (nexus.yml): a standing scan quarantine is
-        # reported as a warning there instead of failing the run four times a day.
+        # Set only for read-only runs (nexus.yml: the six-hourly check and a manual run without
+        # upload): a standing scan quarantine is reported as a warning instead of failing.
         tolerate = os.environ.get("NEXUS_KNOWN_INSTALLER_QUARANTINE") == "1"
         # Quarantined files can disappear from the legacy hash index. Report the
         # actual moderation state before that lookup can obscure it with a 404.

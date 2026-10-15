@@ -42,9 +42,9 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       NEXUSMODS_API_KEY: ${{ secrets.NEXUSMODS_API_KEY }}
       RELEASE_TAG: ${{ github.event.release.tag_name }}
-      # The six-hourly drift check reports a standing virus-scan quarantine on the installer
-      # as a warning; release and manual runs still fail on it.
-      NEXUS_KNOWN_INSTALLER_QUARANTINE: ${{ github.event_name == 'schedule' && '1' || '' }}
+      # Read-only checks (the six-hourly run and a manual run without upload) report a standing
+      # virus-scan quarantine on the installer as a warning; release runs and manual uploads fail on it.
+      NEXUS_KNOWN_INSTALLER_QUARANTINE: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.upload != true)) && '1' || '' }}
     steps:
       - name: Check out release tooling
         uses: actions/checkout@v4

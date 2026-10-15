@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Prepare and verify the Nexus mirror of a published GitHub release. No API writes.
 
-Nexus carries one file: the Beacon installer (BeaconSetup-<version>.exe) from the latest
-published release on this repository, in the existing "Beacon app (installer)" file group,
-with mod-manager downloads off. The launcher zip stays on GitHub releases only.
-The installer, its BeaconSetup-latest.exe copy and the launcher checksum manifest are all
-checked against the GitHub release before anything is mirrored."""
+Nexus carries one file: the Nexus Mods build of the Beacon installer
+(BeaconSetup-<version>-nexus.exe, the app without its self-updater, which Nexus Mods
+does not allow) from the latest published release on this repository, in the existing
+"Beacon app (installer)" file group, with mod-manager downloads off. GitHub users keep
+the self-updating BeaconSetup-<version>.exe; the launcher zip stays on GitHub only.
+Releases up to 0.3.133 predate the Nexus build and are checked against their one
+installer. Every installer, the BeaconSetup-latest.exe copy and the launcher checksum
+manifest are checked against the GitHub release before anything is mirrored."""
 
 import argparse
 import hashlib
@@ -30,6 +33,8 @@ LATEST_ALIAS = "BeaconSetup-latest.exe"
 # Uploaded by hand when the page was created (2026-10-13), before this mirror existed,
 # with no Nexus changelog entry. Every later version must carry one.
 HAND_UPLOADED_WITHOUT_CHANGELOG = frozenset({"0.3.132"})
+# The last release published before the Nexus build existed.
+LAST_WITHOUT_NEXUS_BUILD = (0, 3, 133)
 APPROVED_SCANS = ("VERIFIED", "INTERNALLY_VERIFIED", "MANUALLY_VERIFIED")
 # Nexus field limits. Version, name and changelog: the API's own schema
 # (https://api.nexusmods.com/openapi.yaml, CreateModFileVersionRequest and
@@ -95,16 +100,35 @@ def installer_name(version):
     return f"BeaconSetup-{version}.exe"
 
 
-def release_names(version):
-    return {installer_name(version), LATEST_ALIAS, f"Beacon-Launcher-Windows-x64-v{version}.zip"}
+def nexus_installer_name(version):
+    return f"BeaconSetup-{version}-nexus.exe"
+
+
+def mirror_name(release, version):
+    """The installer that goes to Nexus: the Nexus build, or for releases that predate
+    it, the one installer they have. A newer release without the Nexus build fails."""
+    names = {a["name"] for a in release["assets"]}
+    if nexus_installer_name(version) in names:
+        return nexus_installer_name(version)
+    if tuple(map(int, version.split("."))) <= LAST_WITHOUT_NEXUS_BUILD:
+        return installer_name(version)
+    raise ValueError(f"Release has no Nexus Mods build ({nexus_installer_name(version)}); refusing to mirror the self-updating installer")
+
+
+def release_names(version, mirrored):
+    names = {installer_name(version), LATEST_ALIAS, f"Beacon-Launcher-Windows-x64-v{version}.zip"}
+    return names | {mirrored}
 
 
 def verify_assets(folder, release, version):
-    """Check the installer and the checksum manifest against the GitHub release.
+    """Check the mirrored installer and the checksum manifest against the GitHub release.
 
-    The manifest must name exactly the installer, its BeaconSetup-latest.exe copy and the
-    launcher zip. A line repeated with the same digest is tolerated; a name listed with two
-    different digests is not. The zip is checked by its GitHub digest only (never mirrored)."""
+    The manifest must name exactly the installer, its BeaconSetup-latest.exe copy, the
+    launcher zip and (from 0.3.134) the Nexus build. A line repeated with the same digest is
+    tolerated; a name listed with two different digests is not. Files that are not mirrored
+    are checked by their GitHub digest only. The Nexus build must differ from the GitHub
+    installer. Returns the name of the file to mirror."""
+    mirrored = mirror_name(release, version)
     installer = installer_name(version)
     assets = {a["name"]: a for a in release["assets"]}
     expected = {}
@@ -117,9 +141,9 @@ def verify_assets(folder, release, version):
         if match[2] in expected and expected[match[2]] != match[1]:
             raise ValueError("Conflicting duplicate release checksum entry")
         expected[match[2]] = match[1]
-    if set(expected) != release_names(version):
-        raise ValueError("Release checksum manifest must name exactly the installer, its latest copy and the launcher zip")
-    for name in [SUMS_NAME, installer]:
+    if set(expected) != release_names(version, mirrored):
+        raise ValueError("Release checksum manifest must name exactly the installers, the latest copy and the launcher zip")
+    for name in [SUMS_NAME, mirrored]:
         data = (folder / name).read_bytes()
         digest = hashlib.sha256(data).hexdigest()
         asset = assets.get(name)
@@ -127,13 +151,15 @@ def verify_assets(folder, release, version):
             raise ValueError(f"GitHub asset digest/size mismatch: {name}")
         if name in expected and expected[name] != digest:
             raise ValueError(f"Release checksum mismatch: {name}")
-    for name in release_names(version) - {installer}:
+    for name in release_names(version, mirrored) - {mirrored}:
         asset = assets.get(name)
         if not asset or asset.get("digest") != "sha256:" + expected[name]:
             raise ValueError(f"Release checksum mismatch: {name}")
     if expected[LATEST_ALIAS] != expected[installer]:
         raise ValueError("BeaconSetup-latest.exe is not the same file as the versioned installer")
-    return installer
+    if mirrored != installer and expected[mirrored] == expected[installer]:
+        raise ValueError("The Nexus build is the same file as the self-updating installer")
+    return mirrored
 
 
 def select_file_group(files):
@@ -296,7 +322,7 @@ def main():
     folder = args.directory
     folder.mkdir(parents=True, exist_ok=True)
     if args.mode != "verify":
-        for name in [installer_name(version), SUMS_NAME]:
+        for name in [mirror_name(release, version), SUMS_NAME]:
             subprocess.run([
                 "gh", "release", "download", release["tag_name"], "--repo", REPOSITORY,
                 "--dir", str(folder), "--pattern", name, "--clobber",
@@ -316,7 +342,7 @@ def main():
     current = existing_version(versions, version)
     if len(FILE_GROUP) > NAME_MAX or not re.fullmatch(NAME_PATTERN, FILE_GROUP):
         raise ValueError("Nexus file name is too long or has characters Nexus refuses")
-    outputs = {"version": version, "mod_id": mod_id, "file_id": file_id,
+    outputs = {"version": version, "mod_id": mod_id, "file_id": file_id, "filename": installer,
                "display_name": FILE_GROUP,
                "changelog": nexus_changelog(release.get("body"), version),
                "description": nexus_description(version),

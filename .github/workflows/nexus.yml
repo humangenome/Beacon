@@ -10,7 +10,7 @@ name: Nexus release mirror
   workflow_dispatch:
     inputs:
       upload:
-        description: Upload the installer if Nexus lacks the latest published stable release
+        description: Upload the Nexus Mods installer if Nexus lacks the latest published stable release
         type: boolean
         default: false
   schedule:
@@ -62,7 +62,7 @@ jobs:
         with:
           api_key: ${{ secrets.NEXUSMODS_API_KEY }}
           file_id: ${{ steps.prepare.outputs.file_id }}
-          filename: ${{ runner.temp }}/nexus-release/BeaconSetup-${{ steps.prepare.outputs.version }}.exe
+          filename: ${{ runner.temp }}/nexus-release/${{ steps.prepare.outputs.filename }}
           version: ${{ steps.prepare.outputs.version }}
           display_name: ${{ steps.prepare.outputs.display_name }}
           description: ${{ steps.prepare.outputs.description }}
@@ -87,7 +87,7 @@ jobs:
             echo '## Nexus release mirror'
             echo "Status: $JOB_STATUS"
             echo 'Listing: https://www.nexusmods.com/subnautica2/mods/505?tab=files'
-            echo 'Nexus carries the installer (BeaconSetup-<version>.exe) with mod-manager downloads off. The launcher zip is on the GitHub release only.'
+            echo 'Nexus carries the Nexus Mods build of the installer (BeaconSetup-<version>-nexus.exe, no self-update) with mod-manager downloads off. GitHub keeps the self-updating installer and the launcher zip.'
             echo 'Check the installer download button for scan/quarantine status before closing the release.'
             echo 'If Nexus blocks the file, retain it for review; do not repeatedly upload it.'
           } >> "$GITHUB_STEP_SUMMARY"

@@ -45,24 +45,38 @@ Hosting: [Example](https://example.invalid/) runs Beacon for you.
 """
 
 
-def write_release_files(folder, version, sums_lines=None):
-    """Write an installer fixture plus checksum manifest; return the GitHub asset list."""
+def write_release_files(folder, version, sums_lines=None, nexus=None):
+    """Write installer fixtures plus checksum manifest; return the GitHub asset list.
+
+    From 0.3.134 a release also carries the Nexus build (BeaconSetup-<v>-nexus.exe),
+    a different file from the self-updating installer."""
+    if nexus is None:
+        nexus = tuple(map(int, version.split("."))) > sync.LAST_WITHOUT_NEXUS_BUILD
     installer = folder / f"BeaconSetup-{version}.exe"
     installer.write_bytes(b"fixture installer " + version.encode())
     digest = hashlib.sha256(installer.read_bytes()).hexdigest()
     zip_digest = hashlib.sha256(b"fixture zip").hexdigest()
+    nexus_file = folder / f"BeaconSetup-{version}-nexus.exe"
+    if nexus:
+        nexus_file.write_bytes(b"fixture nexus installer " + version.encode())
+    nexus_digest = hashlib.sha256(nexus_file.read_bytes()).hexdigest() if nexus else None
     if sums_lines is None:
         sums_lines = [f"{digest}  BeaconSetup-{version}.exe", f"{digest}  BeaconSetup-latest.exe",
                       f"{zip_digest}  Beacon-Launcher-Windows-x64-v{version}.zip"]
+        if nexus:
+            sums_lines.append(f"{nexus_digest}  {nexus_file.name}")
     sums = folder / "checksums-launcher.txt"
     sums.write_text("\n".join(sums_lines) + "\n")
-    return [
+    assets = [
         {"name": installer.name, "size": installer.stat().st_size, "digest": "sha256:" + digest},
         {"name": "BeaconSetup-latest.exe", "size": installer.stat().st_size, "digest": "sha256:" + digest},
         {"name": f"Beacon-Launcher-Windows-x64-v{version}.zip", "size": 11, "digest": "sha256:" + zip_digest},
         {"name": sums.name, "size": sums.stat().st_size,
          "digest": "sha256:" + hashlib.sha256(sums.read_bytes()).hexdigest()},
     ]
+    if nexus:
+        assets.append({"name": nexus_file.name, "size": nexus_file.stat().st_size, "digest": "sha256:" + nexus_digest})
+    return assets
 
 
 class ReleaseSafety(unittest.TestCase):
@@ -281,7 +295,8 @@ class InstallerMirror(unittest.TestCase):
             "published_at": "2026-10-20T00:00:00Z", "body": NOTES,
             "assets": write_release_files(self.folder, version),
         }
-        self.md5 = hashlib.md5((self.folder / f"BeaconSetup-{version}.exe").read_bytes()).hexdigest()
+        self.mirrored = sync.mirror_name(self.release, version)
+        self.md5 = hashlib.md5((self.folder / self.mirrored).read_bytes()).hexdigest()
 
     def fake_nexus(self, path, payload=None):
         self.calls.append(path)
@@ -332,8 +347,9 @@ class InstallerMirror(unittest.TestCase):
 
     def test_verify_passes_on_a_clean_mirrored_installer(self):
         keys, text, log = self.run_mode("verify")
-        self.assertEqual(keys, {"version", "mod_id", "file_id", "display_name", "changelog",
+        self.assertEqual(keys, {"version", "mod_id", "file_id", "filename", "display_name", "changelog",
                                 "description", "installer_upload"})
+        self.assertRegex(text, r"filename<<value_\w+\n%s\n" % re.escape(self.mirrored))
         self.assertRegex(text, r"installer_upload<<value_\w+\nfalse\n")
         self.assertRegex(text, r"display_name<<value_\w+\nBeacon app \(installer\)\n")
         self.assertIn("hash-index verified", log)
@@ -360,7 +376,7 @@ class InstallerMirror(unittest.TestCase):
     def test_scheduled_verify_warns_on_quarantine_and_missing_index(self):
         self.scan, self.indexed = "QUARANTINED", False
         _, _, log = self.run_mode("verify", scheduled=True)
-        self.assertIn("::warning::Nexus installer 0.3.133 is quarantined", log)
+        self.assertIn("::warning::Nexus installer %s is quarantined" % self.VERSION, log)
         self.assertIn("hash index unavailable", log)
 
     def test_index_failure_on_a_clean_file_still_fails(self):
@@ -400,7 +416,7 @@ class InstallerMirror(unittest.TestCase):
             self.run_mode("prepare")
 
     def test_github_integrity_is_checked_before_any_nexus_call(self):
-        (self.folder / f"BeaconSetup-{self.VERSION}.exe").write_bytes(b"tampered")
+        (self.folder / self.mirrored).write_bytes(b"tampered")
         with self.assertRaisesRegex(ValueError, "digest/size"):
             self.run_mode("verify")
         self.assertEqual(self.calls, [])
@@ -440,10 +456,73 @@ class InstallerMirror(unittest.TestCase):
         inputs = dict(re.findall(r"^          (\w+): (.*)$", step, re.M))
         for field in ["description", "changelog", "display_name", "version"]:
             self.assertEqual(inputs[field], "${{ steps.prepare.outputs.%s }}" % field)
+        self.assertEqual(inputs["filename"], "${{ runner.temp }}/nexus-release/${{ steps.prepare.outputs.filename }}")
+        for field in []:
+            self.assertEqual(inputs[field], "${{ steps.prepare.outputs.%s }}" % field)
         self.versions = self.versions[:1]
         keys, _, _ = self.run_mode("prepare")
         used = set(re.findall(r"steps\.prepare\.outputs\.(\w+)", text))
         self.assertLessEqual(used, keys, "the workflow reads an output the script never writes")
+
+
+class NexusBuildMirror(InstallerMirror):
+    """From 0.3.134 the mirror uploads the Nexus build, never the self-updating installer."""
+
+    VERSION = "0.3.134"
+
+    def test_the_nexus_build_is_the_file_mirrored(self):
+        self.assertEqual(self.mirrored, "BeaconSetup-0.3.134-nexus.exe")
+        self.versions = self.versions[:1]
+        _, text, _ = self.run_mode("prepare", release_tag="v0.3.134")
+        self.assertRegex(text, r"filename<<value_\w+\nBeaconSetup-0\.3\.134-nexus\.exe\n")
+
+
+class NexusBuildSelection(unittest.TestCase):
+    def release(self, version, assets):
+        return {"tag_name": "v" + version, "draft": False, "prerelease": False,
+                "published_at": "2026-10-20T00:00:00Z", "assets": assets}
+
+    def test_release_without_the_nexus_build_is_refused_from_0_3_134(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            assets = write_release_files(folder, "0.3.134", nexus=False)
+            with self.assertRaisesRegex(ValueError, "no Nexus Mods build"):
+                sync.verify_assets(folder, self.release("0.3.134", assets), "0.3.134")
+
+    def test_releases_up_to_0_3_133_mirror_their_one_installer(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            assets = write_release_files(folder, "0.3.133")
+            self.assertEqual(sync.verify_assets(folder, self.release("0.3.133", assets), "0.3.133"),
+                             "BeaconSetup-0.3.133.exe")
+
+    def test_nexus_build_must_differ_from_the_self_updating_installer(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            write_release_files(folder, "0.3.134")
+            (folder / "BeaconSetup-0.3.134-nexus.exe").write_bytes((folder / "BeaconSetup-0.3.134.exe").read_bytes())
+            same = hashlib.sha256((folder / "BeaconSetup-0.3.134.exe").read_bytes()).hexdigest()
+            zip_digest = hashlib.sha256(b"fixture zip").hexdigest()
+            lines = [f"{same}  BeaconSetup-0.3.134.exe", f"{same}  BeaconSetup-latest.exe",
+                     f"{zip_digest}  Beacon-Launcher-Windows-x64-v0.3.134.zip", f"{same}  BeaconSetup-0.3.134-nexus.exe"]
+            assets = write_release_files(folder, "0.3.134", lines, nexus=False)
+            (folder / "BeaconSetup-0.3.134-nexus.exe").write_bytes((folder / "BeaconSetup-0.3.134.exe").read_bytes())
+            size = (folder / "BeaconSetup-0.3.134-nexus.exe").stat().st_size
+            assets.append({"name": "BeaconSetup-0.3.134-nexus.exe", "size": size, "digest": "sha256:" + same})
+            with self.assertRaisesRegex(ValueError, "same file"):
+                sync.verify_assets(folder, self.release("0.3.134", assets), "0.3.134")
+
+    def test_manifest_must_list_the_nexus_build(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            assets = write_release_files(folder, "0.3.134")
+            lines = (folder / "checksums-launcher.txt").read_text().splitlines()[:3]
+            (folder / "checksums-launcher.txt").write_text("\n".join(lines) + "\n")
+            sums = folder / "checksums-launcher.txt"
+            assets = [a if a["name"] != sums.name else {**a, "size": sums.stat().st_size,
+                      "digest": "sha256:" + hashlib.sha256(sums.read_bytes()).hexdigest()} for a in assets]
+            with self.assertRaisesRegex(ValueError, "exactly"):
+                sync.verify_assets(folder, self.release("0.3.134", assets), "0.3.134")
 
 
 class NexusFieldLimits(unittest.TestCase):

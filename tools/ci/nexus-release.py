@@ -31,6 +31,17 @@ LATEST_ALIAS = "BeaconSetup-latest.exe"
 # with no Nexus changelog entry. Every later version must carry one.
 HAND_UPLOADED_WITHOUT_CHANGELOG = frozenset({"0.3.132"})
 APPROVED_SCANS = ("VERIFIED", "INTERNALLY_VERIFIED", "MANUALLY_VERIFIED")
+# Nexus field limits. Version, name and changelog: the API's own schema
+# (https://api.nexusmods.com/openapi.yaml, CreateModFileVersionRequest and
+# AddModChangelogEntriesRequest, read 2026-10-14). Description: the Nexus file edit form
+# rejects more than 255 characters (seen 2026-10-14); the API accepted longer ones on
+# 2026-10-13 but may adopt the same limit. The description is one short fixed line and
+# the release notes go in the changelog.
+VERSION_MAX = 20  # well inside Nexus's 50; keeps the description bounded
+NAME_MAX = 50
+NAME_PATTERN = r"[a-zA-Z0-9 _'().-]+"
+DESCRIPTION_MAX = 255
+CHANGELOG_MAX = 65535
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -69,9 +80,15 @@ def release_version(release, requested=""):
         raise ValueError("Expected a stable vMAJOR.MINOR.PATCH release")
     if release.get("draft", True) or release.get("prerelease", True) or not release.get("published_at"):
         raise ValueError("Only a published stable release can be mirrored")
+    if len(tag) - 1 > VERSION_MAX:
+        raise ValueError("Release version is longer than the Nexus mirror accepts")
     if requested and requested != tag:
         raise ValueError("Requested release is no longer Latest; refusing to downgrade Nexus")
     return tag[1:]
+
+
+def release_url(version):
+    return f"https://github.com/{REPOSITORY}/releases/tag/v{version}"
 
 
 def installer_name(version):
@@ -240,6 +257,25 @@ def plain_notes(body):
     return "\n".join(lines)
 
 
+def nexus_description(version):
+    """One short fixed line; never the release notes (see DESCRIPTION_MAX)."""
+    text = f"Beacon {version} for Windows. Release notes: {release_url(version)}"
+    if len(text) > DESCRIPTION_MAX:
+        raise ValueError(f"Nexus file description is over {DESCRIPTION_MAX} characters")
+    return text
+
+
+def nexus_changelog(body, version):
+    """The release notes as plain lines, cut with a link back only if they pass Nexus's limit."""
+    text = plain_notes(body)
+    if not text:
+        raise ValueError("Release notes are empty; Nexus needs a changelog entry")
+    if len(text) <= CHANGELOG_MAX:
+        return text
+    tail = f"\nFull release notes: {release_url(version)}"
+    return text[:CHANGELOG_MAX - len(tail)].rstrip() + tail
+
+
 def write_outputs(values):
     target = os.environ.get("GITHUB_OUTPUT")
     if not target:
@@ -278,13 +314,12 @@ def main():
     file_id = select_file_group(nexus(f"/v3/mods/{mod_id}/files")["data"]["mod_files"])
     versions = nexus(f"/v3/mod-files/{file_id}/versions")["data"]["versions"]
     current = existing_version(versions, version)
-    changelog = plain_notes(release.get("body"))
-    if not changelog:
-        raise ValueError("Release notes are empty; Nexus needs a changelog entry")
+    if len(FILE_GROUP) > NAME_MAX or not re.fullmatch(NAME_PATTERN, FILE_GROUP):
+        raise ValueError("Nexus file name is too long or has characters Nexus refuses")
     outputs = {"version": version, "mod_id": mod_id, "file_id": file_id,
-               "display_name": FILE_GROUP, "changelog": changelog,
-               "description": f"Beacon {version} for Windows. Release notes: "
-                              f"https://github.com/{REPOSITORY}/releases/tag/v{version}",
+               "display_name": FILE_GROUP,
+               "changelog": nexus_changelog(release.get("body"), version),
+               "description": nexus_description(version),
                "installer_upload": "false" if current else "true"}
     if not current and args.mode == "verify":
         raise ValueError("Nexus installer version is missing")

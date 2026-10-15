@@ -1,0 +1,93 @@
+name: Nexus release mirror
+
+'on':
+  push:
+    paths: ['.github/workflows/nexus.yml', 'tools/ci/*nexus*']
+  pull_request:
+    paths: ['.github/workflows/nexus.yml', 'tools/ci/*nexus*']
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: Upload the installer if Nexus lacks the latest published stable release
+        type: boolean
+        default: false
+  schedule:
+    - cron: '41 */6 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nexus-release-mirror
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: python3 tools/ci/test-nexus-release.py
+
+  mirror:
+    needs: checks
+    if: github.repository == 'HumanGenome/Beacon' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'release' && github.event.release.prerelease == false))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      NEXUSMODS_API_KEY: ${{ secrets.NEXUSMODS_API_KEY }}
+      RELEASE_TAG: ${{ github.event.release.tag_name }}
+      # The six-hourly drift check reports a standing virus-scan quarantine on the installer
+      # as a warning; release and manual runs still fail on it.
+      NEXUS_KNOWN_INSTALLER_QUARANTINE: ${{ github.event_name == 'schedule' && '1' || '' }}
+    steps:
+      - name: Check out release tooling
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Prepare exact GitHub assets and inspect Nexus file versions
+        id: prepare
+        run: python3 tools/ci/nexus-release.py prepare --directory "$RUNNER_TEMP/nexus-release"
+
+      - name: Mirror installer
+        if: steps.prepare.outputs.installer_upload == 'true' && (github.event_name == 'release' || inputs.upload == true)
+        uses: Nexus-Mods/upload-action@c96019556046053aa26044b44396cd38929daf23
+        with:
+          api_key: ${{ secrets.NEXUSMODS_API_KEY }}
+          file_id: ${{ steps.prepare.outputs.file_id }}
+          filename: ${{ runner.temp }}/nexus-release/BeaconSetup-${{ steps.prepare.outputs.version }}.exe
+          version: ${{ steps.prepare.outputs.version }}
+          display_name: ${{ steps.prepare.outputs.display_name }}
+          description: ${{ steps.prepare.outputs.description }}
+          category: main
+          archive_existing_version: false
+          primary_mod_manager_download: true
+          allow_mod_manager_download: false
+          show_requirements_pop_up: true
+          update_mod_version: true
+          mod_id: ${{ steps.prepare.outputs.mod_id }}
+          changelog: ${{ steps.prepare.outputs.changelog }}
+
+      - name: Verify Nexus version and installer readback
+        run: python3 tools/ci/nexus-release.py verify --directory "$RUNNER_TEMP/nexus-release"
+
+      - name: Write distribution status
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          {
+            echo '## Nexus release mirror'
+            echo "Status: $JOB_STATUS"
+            echo 'Listing: https://www.nexusmods.com/subnautica2/mods/505?tab=files'
+            echo 'Nexus carries the installer (BeaconSetup-<version>.exe) with mod-manager downloads off. The launcher zip is on the GitHub release only.'
+            echo 'Check the installer download button for scan/quarantine status before closing the release.'
+            echo 'If Nexus blocks the file, retain it for review; do not repeatedly upload it.'
+          } >> "$GITHUB_STEP_SUMMARY"

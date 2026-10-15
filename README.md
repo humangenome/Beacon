@@ -107,7 +107,7 @@ Beacon uses UE4SS for Lua and C++ mod loading on the client and host runtime. Se
 ## Install
 
 ### Rent a server
-The easiest option is a [SurvivalServers.com Subnautica 2 server](https://www.survivalservers.com/services/game_servers/subnautica_2/?utm_source=github&utm_medium=readme_install&utm_campaign=beacon) (official hosting): the complete Beacon server runtime comes preinstalled and the ports are already configured.
+The easiest option is a [SurvivalServers.com Subnautica 2 server](https://www.survivalservers.com/services/game_servers/subnautica_2/?utm_source=github&utm_medium=readme_install&utm_campaign=beacon): the complete Beacon server runtime comes preinstalled and the ports are already configured.
 
 ### Players
 1. Download `BeaconSetup-<version>.exe` from the [latest release](https://github.com/HumanGenome/Beacon/releases/latest).

@@ -111,7 +111,7 @@ The easiest option is a [SurvivalServers.com Subnautica 2 server](https://www.su
 
 ### Players
 1. Download `BeaconSetup-<version>.exe` from the [latest release](https://github.com/HumanGenome/Beacon/releases/latest).
-2. Run the installer. Windows SmartScreen may warn because the installer is not code-signed yet; choose **More info** then **Run anyway**.
+2. Run the installer. Windows SmartScreen may warn because the installer is not code-signed; choose **More info** then **Run anyway**.
 3. Open Beacon, add the server address, select or create a character, and click **Connect**.
 
 Beacon checks for launcher updates automatically on launch and while it is running. The copy on Nexus Mods (`BeaconSetup-<version>-nexus.exe`) does not update itself; get new versions from its Files tab.
@@ -134,6 +134,7 @@ This repo publishes the launcher only:
 
 - `BeaconSetup-<version>.exe`: installer for players
 - `BeaconSetup-latest.exe`: stable download URL that always points at the most recent installer
+- `BeaconSetup-<version>-nexus.exe`: the same app without self-update, the copy published on Nexus Mods
 - `Beacon-Launcher-Windows-x64-v<version>.zip`: portable launcher build
 - `checksums-launcher.txt`: hashes for the launcher assets
 

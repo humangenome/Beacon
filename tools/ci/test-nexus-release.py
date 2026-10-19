@@ -256,6 +256,91 @@ class ReleaseSafety(unittest.TestCase):
             with self.subTest(invalid=invalid), self.assertRaises(ValueError):
                 self.verify_downloads(invalid, tolerate=True)
 
+    def todays_page(self):
+        """Mod 505 as Nexus listed it on 2026-10-19: the new main file waiting for moderator
+        review, the approved one before it, and the two archived self-updating installers."""
+        def record(file_id, version, category, scan, primary=0):
+            return {"fileId": file_id, "name": sync.FILE_GROUP, "version": version, "category": category,
+                    "primary": primary, "manager": 1, "requirementsAlert": 1, "scannedV2": scan}
+        return {"data": {
+            "mod": {"name": sync.MOD_NAME, "version": "0.3.135", "status": "published"},
+            "modFiles": [record(1246, "0.3.132", "ARCHIVED", "QUARANTINED"),
+                         record(1250, "0.3.134", "OLD_VERSION", "MANUALLY_VERIFIED"),
+                         record(1255, "0.3.135", "MAIN", "QUARANTINED", primary=1),
+                         record(1249, "0.3.133", "ARCHIVED", "QUARANTINED")],
+        }}
+
+    def test_report_lists_every_file_newest_first_and_names_the_newest_download(self):
+        with contextlib.redirect_stdout(io.StringIO()) as log:
+            table = sync.report_files(self.todays_page())
+        self.assertEqual([line for line in table.splitlines() if re.match(r"\| \d", line)], [
+            "| 1255 | Beacon app (installer) | 0.3.135 | MAIN | QUARANTINED | no |",
+            "| 1250 | Beacon app (installer) | 0.3.134 | OLD_VERSION | MANUALLY_VERIFIED | yes |",
+            "| 1249 | Beacon app (installer) | 0.3.133 | ARCHIVED | QUARANTINED | no |",
+            "| 1246 | Beacon app (installer) | 0.3.132 | ARCHIVED | QUARANTINED | no |",
+        ])
+        self.assertIn("Newest downloadable installer: 0.3.134 (file 1250, MANUALLY_VERIFIED)", table)
+        self.assertIn("Nexus file 1255: Beacon app (installer) 0.3.135, MAIN, QUARANTINED, downloadable: no",
+                      log.getvalue())
+        self.assertIn("Nexus: Newest downloadable installer: 0.3.134 (file 1250", log.getvalue())
+
+    def test_only_a_listed_approved_installer_counts_as_downloadable(self):
+        page = self.todays_page()
+        files = page["data"]["modFiles"]
+        files[1]["category"] = "ARCHIVED"
+        files.append({"fileId": 1260, "name": "Beacon launcher zip", "version": "0.3.136",
+                      "category": "MAIN", "scannedV2": "VERIFIED"})
+        for status in ["QUEUED", "NOT_SCANNED", "unknown", None]:
+            files.append({"fileId": 1270, "name": sync.FILE_GROUP, "version": "0.3.137",
+                          "category": "OLD_VERSION", "scannedV2": status})
+            with self.subTest(status=status):
+                self.assertEqual(sync.newest_downloadable(sync.page_files(page)), "Newest downloadable "
+                                 "installer: none (no installer on the Files tab has passed its scan)")
+            files.pop()
+
+    def test_report_tolerates_a_failed_or_empty_query(self):
+        for response in [{}, {"data": None}, {"errors": [{"message": "unavailable"}]},
+                         {"data": {"modFiles": None}}, {"data": {"modFiles": ["not a record"]}}]:
+            with self.subTest(response=response), contextlib.redirect_stdout(io.StringIO()):
+                table = sync.report_files(response)
+            self.assertIn("| - | no file records returned | - | - | - | - |", table)
+            self.assertIn("Newest downloadable installer: none", table)
+
+    def test_nexus_fields_cannot_break_the_log_or_the_table(self):
+        page = {"data": {"modFiles": [{"fileId": "1|2", "name": "x\n::error::boom | y", "version": "0.3.1`",
+                                       "category": "MAIN", "scannedV2": "VERIFIED\n::notice::z"}]}}
+        with contextlib.redirect_stdout(io.StringIO()) as log:
+            table = sync.report_files(page)
+        self.assertNotIn("::", log.getvalue() + table)
+        self.assertTrue(all(line.startswith("Nexus") for line in log.getvalue().splitlines()))
+        row = [line for line in table.splitlines() if line.startswith("| 1")]
+        self.assertEqual(len(row), 1)
+        self.assertEqual(row[0].count("|"), 7)
+
+    def test_quarantine_warning_and_failures_name_the_newest_download(self):
+        newest = "Newest downloadable installer: 0.3.134 (file 1250, MANUALLY_VERIFIED)"
+        with contextlib.redirect_stdout(io.StringIO()) as log:
+            self.assertTrue(sync.verify_public_downloads(self.todays_page(), "0.3.135",
+                                                         {"game_scoped_id": "1255"}, True))
+        self.assertIn("::warning::Nexus installer 0.3.135 is quarantined", log.getvalue())
+        self.assertIn(newest, log.getvalue())
+        self.assertNotIn("::notice::", log.getvalue())
+        for status, message in [("QUARANTINED", "quarantined"), ("QUEUED", "not passed its scan")]:
+            page = self.todays_page()
+            page["data"]["modFiles"][2]["scannedV2"] = status
+            with self.subTest(status=status), \
+                    self.assertRaisesRegex(ValueError, re.escape(message) + ".*" + re.escape(newest)):
+                sync.verify_public_downloads(page, "0.3.135", {"game_scoped_id": "1255"})
+
+    def test_a_cleared_installer_adds_a_notice(self):
+        for status in sync.APPROVED_SCANS:
+            page = self.todays_page()
+            page["data"]["modFiles"][2]["scannedV2"] = status
+            with self.subTest(status=status), contextlib.redirect_stdout(io.StringIO()) as log:
+                self.assertFalse(sync.verify_public_downloads(page, "0.3.135", {"game_scoped_id": "1255"}, True))
+            self.assertIn(f"::notice::Nexus installer 0.3.135 scan cleared ({status})", log.getvalue())
+            self.assertNotIn("::warning::", log.getvalue())
+
     def test_release_notes_become_plain_changelog_lines(self):
         self.assertEqual(sync.plain_notes(NOTES).splitlines(), [
             "Client, fixed: The World window shows its snapshot list again, with Download.",
@@ -286,6 +371,7 @@ class InstallerMirror(unittest.TestCase):
         self.scan = "VERIFIED"
         self.indexed = True
         self.changelogs = {self.VERSION: ["notes"]}
+        self.older_files = []
         self.calls = []
 
     def setup_release(self, version):
@@ -312,8 +398,9 @@ class InstallerMirror(unittest.TestCase):
             file_id = int(current[0]["game_scoped_id"]) if current else 0
             return {"data": {
                 "mod": {"name": sync.MOD_NAME, "version": self.version, "status": "published"},
-                "modFiles": [{"fileId": file_id, "version": self.version, "category": "MAIN", "primary": 1,
-                              "manager": 1, "requirementsAlert": 1, "scannedV2": self.scan}],
+                "modFiles": [{"fileId": file_id, "name": sync.FILE_GROUP, "version": self.version,
+                              "category": "MAIN", "primary": 1, "manager": 1, "requirementsAlert": 1,
+                              "scannedV2": self.scan}, *self.older_files],
             }}
         if path == f"/v1/games/subnautica2/mods/md5_search/{self.md5}.json":
             if not self.indexed:
@@ -329,6 +416,9 @@ class InstallerMirror(unittest.TestCase):
         outputs.write_text("")
         env = {k: v for k, v in os.environ.items() if k not in ("RELEASE_TAG", "NEXUS_KNOWN_INSTALLER_QUARANTINE")}
         env["GITHUB_OUTPUT"] = str(outputs)
+        summary = self.folder / "step-summary"
+        summary.write_text("")
+        env["GITHUB_STEP_SUMMARY"] = str(summary)
         if scheduled:
             env["NEXUS_KNOWN_INSTALLER_QUARANTINE"] = "1"
         if release_tag:
@@ -388,6 +478,56 @@ class InstallerMirror(unittest.TestCase):
         self.scan = "QUEUED"
         with self.assertRaisesRegex(ValueError, "not passed its scan"):
             self.run_mode("verify", scheduled=True)
+
+    def summary(self):
+        return (self.folder / "step-summary").read_text()
+
+    def test_read_only_run_writes_every_file_state_once_from_verify(self):
+        self.scan = "QUARANTINED"
+        self.older_files = [{"fileId": 1250, "name": sync.FILE_GROUP, "version": "0.3.132",
+                             "category": "OLD_VERSION", "scannedV2": "MANUALLY_VERIFIED"}]
+        row = f"{self.FILE}: Beacon app (installer) {self.VERSION}, MAIN, QUARANTINED, downloadable: no"
+        _, _, log = self.run_mode("prepare", scheduled=True)
+        self.assertIn("Nexus file " + row, log)
+        self.assertEqual(self.summary(), "")
+        _, _, log = self.run_mode("verify", scheduled=True)
+        summary = self.summary()
+        self.assertEqual(summary.count("### Nexus files on the page"), 1)
+        rows = [line for line in summary.splitlines() if re.match(r"\| \d", line)]
+        self.assertEqual(rows, [
+            f"| {self.FILE} | Beacon app (installer) | {self.VERSION} | MAIN | QUARANTINED | no |",
+            "| 1250 | Beacon app (installer) | 0.3.132 | OLD_VERSION | MANUALLY_VERIFIED | yes |",
+        ])
+        self.assertIn("Newest downloadable installer: 0.3.132 (file 1250, MANUALLY_VERIFIED)", summary)
+        self.assertIn("::warning::Nexus installer %s is quarantined" % self.VERSION, log)
+
+    def test_failed_release_prepare_still_writes_the_file_states(self):
+        self.scan = "QUARANTINED"
+        with self.assertRaisesRegex(ValueError, "quarantined"):
+            self.run_mode("prepare", release_tag="v" + self.VERSION)
+        self.assertIn(f"| {self.FILE} | Beacon app (installer) | {self.VERSION} | MAIN | QUARANTINED | no |",
+                      self.summary())
+        self.assertIn("Newest downloadable installer: none", self.summary())
+
+    def test_a_cleared_latest_gets_a_notice_and_is_the_newest_download(self):
+        self.scan = "MANUALLY_VERIFIED"
+        _, _, log = self.run_mode("verify", scheduled=True)
+        self.assertIn(f"::notice::Nexus installer {self.VERSION} scan cleared (MANUALLY_VERIFIED)", log)
+        self.assertNotIn("::warning::", log)
+        self.assertIn(f"Newest downloadable installer: {self.VERSION} (file {self.FILE}, MANUALLY_VERIFIED)",
+                      self.summary())
+
+    def test_missing_version_still_reports_the_page_before_failing(self):
+        self.versions = self.versions[:1]
+        with self.assertRaisesRegex(ValueError, "installer version is missing"):
+            self.run_mode("verify", scheduled=True)
+        self.assertIn("### Nexus files on the page", self.summary())
+
+    def test_prepare_for_a_missing_version_reads_no_scan_state(self):
+        self.versions = self.versions[:1]
+        self.run_mode("prepare", release_tag="v" + self.VERSION)
+        self.assertNotIn("/v2/graphql", self.calls)
+        self.assertEqual(self.summary(), "")
 
     def test_changelog_required_except_for_the_hand_uploaded_version(self):
         self.changelogs = {}

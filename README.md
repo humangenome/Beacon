@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/img/beacon-lockup-dark.png">
-    <img src="docs/img/beacon-lockup-light.png" alt="Beacon" width="480">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/img/beacon-logo-dark.png">
+    <img src="docs/img/beacon-logo-light.png" alt="Beacon" width="480">
   </picture>
 </p>
 

@@ -25,7 +25,7 @@ Every player must install Beacon to join a Beacon server. Stock Subnautica 2 can
 ## Features
 
 ### 🗺 Live map
-See who's online on a real, interactive map of the world. Connected players report their in-world positions, and the launcher's **Map** button opens a browser map that plots each player and updates live, on the full Subnautica 2 world with its points of interest. The map is served from the host's `/map/` page; the live player overlay is visible to anyone the host shares the page with once `Beacon:Map:Public` is enabled in the server settings.
+See who's online on a real, interactive map of the world. Connected players report their in-world positions, and the launcher's **Map** button opens a browser map that plots each player and updates live, on the full Subnautica 2 world with its points of interest. The map is served from the host's `/map/` page. Players on the server see the live players; to show them to anyone the host shares the page with, enable `Beacon:Map:Public` in the server settings.
 
 <p align="center">
   <img src="docs/img/live-map-v0.3.135.png" alt="A Beacon server's live map page: the Subnautica 2 world with four players marked by name" width="860">

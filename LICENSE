@@ -10,8 +10,6 @@ This repository contains:
    and CLOSED SOURCE. They are made available for personal use only.
    Redistribution, modification, decompilation, reverse-engineering, or
    commercial repackaging of those proprietary binaries is not permitted.
-   The launcher's installer ships with an end-user license agreement that
-   contains the full terms.
 
 3. The BeaconServer host-side supervisor is a separate project, distributed
    from https://github.com/HumanGenome/BeaconServer under the MIT License.

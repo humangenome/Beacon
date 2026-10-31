@@ -31,7 +31,7 @@ See who's online on a real, interactive map of the world. Connected players repo
   <img src="docs/img/live-map-v0.3.135.png" alt="A Beacon server's live map page: the Subnautica 2 world with four players marked by name" width="860">
 </p>
 
-### 💬 In-game chat
+### 💬 Text chat
 Press Enter to open chat without leaving the game. Beacon overlays a timestamped chat panel in Subnautica 2 with player messages, server notices, and admin announcements. Admins post announcements and a message of the day from the server console, RCON, or the HTTP API, and players can run commands like `/players` and `/help` straight from the chat box. Chat shows in game on servers that offer Beacon's chat overlay; a self-hosted BeaconServer does not include it.
 
 <p align="center">
@@ -59,7 +59,7 @@ Subnautica 2 has no native password handling, so Beacon adds its own. Set `Beaco
   <img src="docs/img/app-v0.3.135-password.png" alt="Beacon asking for a server's join password before connecting" width="420">
 </p>
 
-### 🔁 Snapshots and rollback
+### 💾 World backups
 The server snapshots the world on every auto-save, and admins can trigger and list snapshots over RCON:
 
 ```
@@ -75,7 +75,7 @@ The app's **World** window lists the server's snapshots by time and size and dow
   <img src="https://raw.githubusercontent.com/HumanGenome/Beacon/main/docs/img/world-backups.png" alt="Beacon World window with a server's snapshots, Restore and save import" width="560">
 </p>
 
-### 🛠 Admin console
+### 🖥 Server console
 BeaconServer exposes Source RCON (default TCP 27018) with built-ins `help`, `status`, `players`, `ping`, `save snapshot`, `save list`, `say`, `announce`, and `motd`, plus slash commands registered by server mods:
 
 ```
@@ -180,6 +180,9 @@ Only while you play through Beacon. Connect sets the game's network settings for
 
 ### Is Linux supported?
 No. Beacon is Windows-only, for both the player app and the server (Windows 10/11 or Windows Server, 64-bit). The server launches the Windows build of Subnautica 2 and uses Windows process management.
+
+### Why does Windows warn about the installer?
+The installer is not code-signed, so Windows SmartScreen may show "Windows protected your PC". Choose **More info**, then **Run anyway**. You can check the file against the release's `checksums-launcher.txt`.
 
 ## Known Issues
 

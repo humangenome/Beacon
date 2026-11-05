@@ -33,6 +33,10 @@ LATEST_ALIAS = "BeaconSetup-latest.exe"
 # Uploaded by hand when the page was created (2026-10-13), before this mirror existed,
 # with no Nexus changelog entry. Every later version must carry one.
 HAND_UPLOADED_WITHOUT_CHANGELOG = frozenset({"0.3.132"})
+# Release-note lines a version's Nexus changelog leaves out because they are untrue for the Nexus build, matched by the
+# start of the note (after its "Section, kind: " prefix); each must match exactly one line. 0.3.138: the Nexus build never
+# updates itself, so the fix for updates under an accented Windows user name does not apply to it.
+NEXUS_CHANGELOG_SKIP = {"0.3.138": ("A Windows user name with an accent",)}
 # The last release published before the Nexus build existed.
 LAST_WITHOUT_NEXUS_BUILD = (0, 3, 133)
 APPROVED_SCANS = ("VERIFIED", "INTERNALLY_VERIFIED", "MANUALLY_VERIFIED")
@@ -360,6 +364,15 @@ def nexus_changelog(body, version):
     text = plain_notes(body)
     if not text:
         raise ValueError("Release notes are empty; Nexus needs a changelog entry")
+    skips = NEXUS_CHANGELOG_SKIP.get(version, ())
+    if skips:
+        lines = text.split("\n")
+        for skip in skips:
+            hits = [line for line in lines if line.split(": ", 1)[-1].startswith(skip)]
+            if len(hits) != 1:
+                raise ValueError(f"Nexus changelog skip {skip!r} matches {len(hits)} lines for {version}, not one")
+            lines.remove(hits[0])
+        text = "\n".join(lines)
     if len(text) <= CHANGELOG_MAX:
         return text
     tail = f"\nFull release notes: {release_url(version)}"

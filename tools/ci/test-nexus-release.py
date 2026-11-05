@@ -351,6 +351,21 @@ class ReleaseSafety(unittest.TestCase):
                          "See your crew.\nLive map: One fix")
         self.assertEqual(sync.plain_notes("---\nHosting: [x](https://example.invalid/)"), "")
 
+    def test_a_version_skip_drops_exactly_one_line_from_the_nexus_changelog(self):
+        notes = ("## Server\n\n### Fixed\n\n- One server fix.\n\n## Client\n\n### Fixed\n\n"
+                 "- A Windows user name with an accent no longer stops updates.\n- Another client fix.\n\n---\n\n"
+                 "Hosting: [x](https://example.invalid/)")
+        with patch.dict(sync.NEXUS_CHANGELOG_SKIP, {"9.9.9": ("A Windows user name with an accent",)}, clear=True):
+            self.assertEqual(sync.nexus_changelog(notes, "9.9.9").splitlines(), [
+                "Server, fixed: One server fix.",
+                "Client, fixed: Another client fix.",
+            ])
+            self.assertIn("A Windows user name with an accent", sync.nexus_changelog(notes, "9.9.8"))
+        with patch.dict(sync.NEXUS_CHANGELOG_SKIP, {"9.9.9": ("Not in these notes",)}, clear=True):
+            with self.assertRaisesRegex(ValueError, "matches 0 lines"):
+                sync.nexus_changelog(notes, "9.9.9")
+        self.assertEqual(sync.NEXUS_CHANGELOG_SKIP["0.3.138"], ("A Windows user name with an accent",))
+
 
 class InstallerMirror(unittest.TestCase):
     """End-to-end prepare/verify runs against a fake Nexus API."""

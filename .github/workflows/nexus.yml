@@ -5,8 +5,6 @@ name: Nexus release mirror
     paths: ['.github/workflows/nexus.yml', 'tools/ci/*nexus*']
   pull_request:
     paths: ['.github/workflows/nexus.yml', 'tools/ci/*nexus*']
-  release:
-    types: [published]
   workflow_dispatch:
     inputs:
       upload:
@@ -35,7 +33,9 @@ jobs:
 
   mirror:
     needs: checks
-    if: github.repository == 'HumanGenome/Beacon' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'release' && github.event.release.prerelease == false))
+    # Uploads happen only from a manual run with upload ticked; publishing or promoting a GitHub release never
+    # uploads by itself.
+    if: github.repository == 'HumanGenome/Beacon' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
@@ -43,7 +43,7 @@ jobs:
       NEXUSMODS_API_KEY: ${{ secrets.NEXUSMODS_API_KEY }}
       RELEASE_TAG: ${{ github.event.release.tag_name }}
       # Read-only checks (the six-hourly run and a manual run without upload) report a standing
-      # virus-scan quarantine on the installer as a warning; release runs and manual uploads fail on it.
+      # virus-scan quarantine on the installer as a warning; a manual upload fails on it.
       NEXUS_KNOWN_INSTALLER_QUARANTINE: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.upload != true)) && '1' || '' }}
     steps:
       - name: Check out release tooling
@@ -57,7 +57,7 @@ jobs:
         run: python3 tools/ci/nexus-release.py prepare --directory "$RUNNER_TEMP/nexus-release"
 
       - name: Mirror installer
-        if: steps.prepare.outputs.installer_upload == 'true' && (github.event_name == 'release' || inputs.upload == true)
+        if: steps.prepare.outputs.installer_upload == 'true' && github.event_name == 'workflow_dispatch' && inputs.upload == true
         uses: Nexus-Mods/upload-action@c96019556046053aa26044b44396cd38929daf23
         with:
           api_key: ${{ secrets.NEXUSMODS_API_KEY }}

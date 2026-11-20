@@ -91,6 +91,8 @@ Beacon loads UE4SS mods on the server and in players' games. The app installs a 
 3. Open Beacon, press **+** and enter the server's IP and port.
 4. Press **Connect**. The first time, Beacon asks you to make a character for that server.
 
+If Windows says Smart App Control blocked the installer, wait a day or two for Windows to recognize the new version and run it again, or turn Smart App Control off in Windows Security under App & browser control.
+
 Beacon updates itself. The Nexus Mods copy doesn't: get new versions from its Files tab.
 
 ### Host your own

@@ -93,7 +93,7 @@ Beacon loads UE4SS mods on the server and in players' games. The app installs a 
 
 If Windows says Smart App Control blocked the installer, wait a day or two for Windows to recognize the new version and run it again, or turn Smart App Control off in Windows Security under App & browser control.
 
-If the app closes to update and then won't open, download the installer from our website and run it again.
+If the app closes to update and then won't open, download `BeaconSetup-latest.exe` from the [latest release](https://github.com/HumanGenome/Beacon/releases/latest) and run it again.
 
 Beacon updates itself. The Nexus Mods copy doesn't: get new versions from its Files tab.
 

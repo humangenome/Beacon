@@ -86,7 +86,7 @@ Beacon loads UE4SS mods on the server and in players' games. The app installs a 
 [SurvivalServers.com](https://www.survivalservers.com/services/game_servers/subnautica_2/?utm_source=github&utm_medium=readme_install&utm_campaign=beacon) runs Subnautica 2 servers with BeaconServer installed.
 
 ### Players
-1. Download `BeaconSetup-<version>.exe` from the [latest release](https://github.com/HumanGenome/Beacon/releases/latest).
+1. Download `BeaconSetup-latest.exe` from the [latest release](https://github.com/HumanGenome/Beacon/releases/latest).
 2. Run it. At "Windows protected your PC" choose **More info**, then **Run anyway**.
 3. Open Beacon, press **+** and enter the server's IP and port.
 4. Press **Connect**. The first time, Beacon asks you to make a character for that server.
@@ -139,7 +139,7 @@ No. The server runs its own copy of Subnautica 2, and Steam runs one copy of a g
 Yes. Install Subnautica 2 on the server PC from a Steam account that owns it.
 
 ### Can I bring my own world?
-Yes, on a server you host yourself. Open the server's **World** window, save its admin password, and press **Choose file** under **Upload a save**. The save is a `.zip` of a Subnautica 2 SaveGames folder, with `savegame_N.sav` at the top of the zip, not inside a folder. The server backs up the current world first, then restarts on yours. On a rented server, ask your host to load it.
+Yes, on a server you host yourself. Open the server's **World** window, save its admin password, and press **Choose file & import** under **Import a save**. The save is a `.zip` of a Subnautica 2 SaveGames folder, with `savegame_N.sav` at the top of the zip, not inside a folder. The server backs up the current world first, then restarts on yours. On a rented server, ask your host to load it.
 
 ### Does it change my game?
 Only while you play through Beacon. Connect sets the game's network settings for a Beacon join and a 1600x900 window, in your normal Subnautica 2 config folder. When the game closes, Beacon puts your own Engine.ini and display settings back, or on its next start if the app was closed or crashed by then. A display setting you change in game during the session is kept.
@@ -153,7 +153,7 @@ Windows shows "Windows protected your PC" for installers that are not code-signe
 ## Troubleshooting
 
 - **"The game was not started via the platform launcher and will be closed."** On the server PC, keep Steam running and signed in to an account that owns Subnautica 2 (offline mode is fine), under the same Windows user as BeaconServer. BeaconServer writes `steam_appid.txt` itself.
-- **Players can't join after a Subnautica 2 update.** The server and every player must be on the same game build. Update the server's game files whenever the game updates.
+- **Players can't join after a Subnautica 2 update.** The server and every player must be on the same game build. Update the server's game files whenever the game updates. Some updates also need a new BeaconServer release: if players still can't join, wait for it.
 
 ## Contributing
 
